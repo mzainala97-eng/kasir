@@ -16,23 +16,38 @@
     .border-theme { border-color: var(--primary-color) !important; }
     .hover-theme:hover { background-color: var(--secondary-color) !important; }
 
+    /* CSS KHUSUS CETAK STRUK THERMAL & DIGITAL PDF */
     @media print {
-      body * { visibility: hidden !important; }
-      #printable-receipt, #printable-receipt * { visibility: visible !important; }
-      #printable-receipt {
-        position: absolute !important;
+      body * {
+        visibility: hidden !important;
+      }
+      #receipt-paper, #receipt-paper * {
+        visibility: visible !important;
+      }
+      #receipt-paper {
+        display: block !important;
+        position: fixed !important;
         left: 0 !important;
         top: 0 !important;
-        width: 76mm !important;
-        padding: 2mm !important;
+        width: 100% !important;
+        max-width: 80mm !important;
+        margin: 0 !important;
+        padding: 5mm !important;
+        background: white !important;
+        color: black !important;
         font-family: 'Courier New', Courier, monospace !important;
+        font-size: 12px !important;
+      }
+      @page {
+        margin: 0;
+        size: auto;
       }
     }
   </style>
 </head>
 <body id="app-body" class="bg-gray-100 text-gray-800 min-h-screen flex flex-col font-sans select-none bg-cover bg-center">
 
-  <!-- ================= 1. LAYAR LOGIN & OTENTIKASI KEAMANAN ================= -->
+  <!-- ================= 1. LAYAR LOGIN USERNAME & PASSWORD ================= -->
   <div id="login-screen" class="fixed inset-0 z-50 bg-gray-900/85 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-6">
       <div class="text-center space-y-2">
@@ -40,7 +55,7 @@
           <svg class="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
         </div>
         <h2 class="text-xl font-black text-gray-900 tracking-tight" id="login-store-title">WARUNG ENTERPRISE POS</h2>
-        <p class="text-xs text-gray-500">Silakan login untuk mengakses sistem POS & Dashboard</p>
+        <p class="text-xs text-gray-500">Silakan login menggunakan username dan password</p>
       </div>
 
       <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
@@ -57,48 +72,62 @@
       </form>
 
       <div class="pt-3 border-t text-[11px] text-gray-400 text-center space-y-1">
-        <p>Akses Akun Awal:</p>
+        <p>Akses Akun Default:</p>
         <p><strong>Admin:</strong> admin / admin123 &nbsp;|&nbsp; <strong>Kasir:</strong> kasir / kasir123</p>
       </div>
     </div>
   </div>
 
-  <!-- ================= 2. HEADER UTAMA & STATUS PENGGUNA ================= -->
+  <!-- ================= 2. HEADER UTAMA DENGAN FOTO PROFIL TOKO & GEAR PENGATURAN ================= -->
   <header class="bg-theme text-white shadow-md sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+      <!-- Foto Profil / Logo Toko di Header Kasir -->
       <div class="flex items-center gap-3">
-        <div id="store-header-logo-box" class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center font-black text-sm overflow-hidden">
-          W
+        <div id="store-header-logo-box" class="w-9 h-9 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center font-black text-sm overflow-hidden shadow">
+          🏪
         </div>
-        <div class="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold">
-          <span class="w-5 h-5 rounded-full bg-white text-gray-800 flex items-center justify-center font-black text-[10px]" id="user-avatar-initial">A</span>
-          <span id="user-display-name">Admin</span>
-          <span id="user-role-badge" class="bg-black/30 text-[9px] px-1.5 py-0.5 rounded uppercase font-semibold">ADMIN</span>
+        <div>
+          <h1 class="text-xs font-black tracking-wide leading-none" id="header-store-name">WARUNG POS</h1>
+          <div class="flex items-center gap-1.5 mt-1">
+            <span class="w-4 h-4 rounded-full bg-white text-gray-800 flex items-center justify-center font-black text-[9px]" id="user-avatar-initial">A</span>
+            <span class="text-[11px] font-semibold" id="user-display-name">Admin</span>
+            <span id="user-role-badge" class="bg-black/25 text-[8px] px-1 py-0.5 rounded font-black uppercase">ADMIN</span>
+          </div>
         </div>
       </div>
 
+      <!-- Kolom Pencarian -->
       <div class="flex-1 max-w-md relative hidden sm:block">
         <input type="text" id="search-input" oninput="renderMenuCatalog()" placeholder="Cari nama menu atau SKU..." class="w-full pl-9 pr-4 py-1.5 rounded-full bg-white text-gray-800 text-xs outline-none shadow-inner" />
         <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
       </div>
 
+      <!-- Tombol Aksi Header: Gear Pengaturan & Logout -->
       <div class="flex items-center gap-2">
-        <button onclick="handleLogout()" class="bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition">
-          Keluar (Logout)
+        <button onclick="switchTab('account')" class="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white transition flex items-center gap-1 text-xs font-bold" title="Pengaturan Akun">
+          <span>👤 Akun</span>
+        </button>
+        <!-- Logo Gear Pengaturan -->
+        <button onclick="openSettingsTab()" class="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white transition flex items-center justify-center shadow" title="Pengaturan Toko & Sistem">
+          <svg class="w-5 h-5 animate-spin-hover" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        </button>
+        <button onclick="handleLogout()" class="bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold px-3 py-2 rounded-xl transition">
+          Keluar
         </button>
       </div>
     </div>
   </header>
 
-  <!-- ================= 3. BILAH NAVIGASI UTAMA (ROLE-BASED) ================= -->
+  <!-- ================= 3. BILAH NAVIGASI TAB UTAMA ================= -->
   <nav class="bg-white/95 backdrop-blur border-b border-gray-200 sticky top-12 z-30 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 flex gap-4 overflow-x-auto text-xs font-black scrollbar-none">
       <button onclick="switchTab('pos')" id="tab-btn-pos" class="tab-nav-btn py-3 border-b-2 border-theme text-theme whitespace-nowrap">KASIR UTAMA</button>
       <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="tab-nav-btn admin-only py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-800 whitespace-nowrap">DASHBOARD ADMIN</button>
       <button onclick="switchTab('products')" id="tab-btn-products" class="tab-nav-btn admin-only py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-800 whitespace-nowrap">KELOLA PRODUK</button>
-      <button onclick="switchTab('reports')" id="tab-btn-reports" class="tab-nav-btn py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-800 whitespace-nowrap">LAPORAN & EKSPOR</button>
-      <button onclick="switchTab('users')" id="tab-btn-users" class="tab-nav-btn admin-only py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-800 whitespace-nowrap">KELOLA USER</button>
-      <button onclick="switchTab('settings')" id="tab-btn-settings" class="tab-nav-btn admin-only py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-800 whitespace-nowrap">PENGATURAN & TEMA</button>
+      <button onclick="switchTab('reports')" id="tab-btn-reports" class="tab-nav-btn py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-800 whitespace-nowrap">LAPORAN TRANSAKSI</button>
+      <button onclick="switchTab('users')" id="tab-btn-users" class="tab-nav-btn admin-only py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-800 whitespace-nowrap">MANAJEMEN USER</button>
+      <button onclick="switchTab('account')" id="tab-btn-account" class="tab-nav-btn py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-800 whitespace-nowrap">PENGATURAN AKUN</button>
+      <button onclick="switchTab('settings')" id="tab-btn-settings" class="tab-nav-btn admin-only py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-800 whitespace-nowrap">⚙️ PENGATURAN TOKO</button>
     </div>
   </nav>
 
@@ -110,7 +139,7 @@
       <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></div>
     </div>
 
-    <!-- Panel Samping: Daftar Pesanan (Tablet Split View) -->
+    <!-- Panel Pesanan (Kanan) -->
     <div class="w-full lg:w-80 xl:w-96 bg-white border border-gray-200 rounded-2xl p-4 flex flex-col h-[620px] shadow-sm">
       <div class="flex justify-between items-center pb-2 border-b">
         <h3 class="font-bold text-gray-800 text-sm">Daftar Pesanan</h3>
@@ -133,7 +162,7 @@
           <span id="cart-tax" class="font-semibold text-gray-700">Rp 0</span>
         </div>
         <div class="flex justify-between items-center text-sm font-black pt-1 border-t">
-          <span>Total Akhir:</span>
+          <span>Total Tagihan:</span>
           <span id="cart-total" class="text-lg text-theme">Rp 0</span>
         </div>
         <button onclick="openPaymentModal()" class="w-full bg-theme text-white py-3.5 rounded-xl font-black text-sm shadow-md hover-theme active:scale-98 transition">
@@ -143,12 +172,12 @@
     </div>
   </main>
 
-  <!-- ================= 5. TAB DASHBOARD ADMINISTRATOR (ANALYTICS & CHARTS) ================= -->
+  <!-- ================= 5. TAB DASHBOARD ADMINISTRATOR ================= -->
   <main id="tab-dashboard" class="tab-content hidden max-w-7xl w-full mx-auto p-4 space-y-5">
     <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
       <div>
         <h3 class="font-black text-base text-gray-800">Executive Performance Dashboard</h3>
-        <p class="text-xs text-gray-400">Ringkasan real-time aktivitas transaksi, tren finansial, dan performa pegawai</p>
+        <p class="text-xs text-gray-400">Analisis metrik keuangan real-time dan performa pegawai</p>
       </div>
       <div class="flex items-center gap-2">
         <select id="dash-filter" onchange="updateDashboard()" class="text-xs font-bold border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 outline-none">
@@ -156,16 +185,14 @@
           <option value="yesterday">Kemarin</option>
           <option value="7days">7 Hari Terakhir</option>
           <option value="thismonth">Bulan Ini</option>
-          <option value="prevmonth">Bulan Sebelumnya</option>
           <option value="all">Semua Data</option>
         </select>
       </div>
     </div>
 
-    <!-- KPI Metric Cards -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
-        <p class="text-[10px] font-black uppercase text-gray-400">Total Penjualan (Revenue)</p>
+        <p class="text-[10px] font-black uppercase text-gray-400">Total Penjualan</p>
         <p class="text-xl font-black text-theme mt-1" id="dash-omzet">Rp 0</p>
       </div>
       <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
@@ -182,10 +209,9 @@
       </div>
     </div>
 
-    <!-- Visual Charts (Tren Penjualan & Metode Pembayaran) -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-        <h4 class="font-bold text-xs uppercase text-gray-500">Tren Penjualan & Transaksi</h4>
+        <h4 class="font-bold text-xs uppercase text-gray-500">Tren Penjualan Harian</h4>
         <div class="h-64">
           <canvas id="salesTrendChart"></canvas>
         </div>
@@ -198,14 +224,13 @@
       </div>
     </div>
 
-    <!-- Kinerja Kasir & Produk Terlaris -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-        <h4 class="font-bold text-xs uppercase text-gray-500">5 Produk Terlaris</h4>
+        <h4 class="font-bold text-xs uppercase text-gray-500">5 Produk Paling Laris</h4>
         <div id="top-products-list" class="divide-y divide-gray-100 text-xs"></div>
       </div>
       <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-        <h4 class="font-bold text-xs uppercase text-gray-500">Penjualan Berdasarkan Kasir</h4>
+        <h4 class="font-bold text-xs uppercase text-gray-500">Kinerja Penjualan Kasir</h4>
         <div id="cashier-performance-list" class="divide-y divide-gray-100 text-xs"></div>
       </div>
     </div>
@@ -264,7 +289,6 @@
       </form>
     </div>
 
-    <!-- Tabel Master Produk & Stok -->
     <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm overflow-x-auto">
       <h3 class="font-bold text-sm text-gray-800 mb-3">Daftar Produk & Kontrol Stok</h3>
       <table class="w-full text-left text-xs">
@@ -284,7 +308,7 @@
     </div>
   </main>
 
-  <!-- ================= 7. TAB LAPORAN TRANSAKSI & EKSPOR ================= -->
+  <!-- ================= 7. TAB LAPORAN & EKSPOR ================= -->
   <main id="tab-reports" class="tab-content hidden max-w-6xl w-full mx-auto p-4 space-y-4">
     <div class="flex flex-wrap justify-between items-center gap-3 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
       <div class="flex gap-2">
@@ -306,7 +330,7 @@
     </div>
   </main>
 
-  <!-- ================= 8. TAB USER MANAGEMENT (RBAC) ================= -->
+  <!-- ================= 8. TAB USER MANAGEMENT ================= -->
   <main id="tab-users" class="tab-content hidden max-w-4xl w-full mx-auto p-4 space-y-5">
     <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
       <h3 class="font-bold text-sm text-gray-800 mb-3">Buat Akun Pegawai / Admin Baru</h3>
@@ -327,7 +351,7 @@
           </select>
         </div>
         <div class="sm:col-span-3">
-          <button type="submit" class="bg-theme text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow hover-theme">Simpan User</button>
+          <button type="submit" class="bg-theme text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow hover-theme">Simpan User Baru</button>
         </div>
       </form>
     </div>
@@ -338,25 +362,61 @@
     </div>
   </main>
 
-  <!-- ================= 9. TAB KUSTOMISASI APLIKASI & PENGATURAN ================= -->
+  <!-- ================= 9. TAB PENGATURAN AKUN PENGGUNA (PROFIL, EMAIL, NO HP) ================= -->
+  <main id="tab-account" class="tab-content hidden max-w-2xl w-full mx-auto p-4 space-y-4">
+    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+      <div class="flex items-center gap-3 border-b pb-4">
+        <div class="w-12 h-12 rounded-full bg-theme text-white font-black text-lg flex items-center justify-center shadow" id="profile-avatar-large">
+          A
+        </div>
+        <div>
+          <h3 class="font-black text-base text-gray-800" id="profile-display-username">admin</h3>
+          <p class="text-xs text-gray-500 font-semibold" id="profile-display-role">Administrator</p>
+        </div>
+      </div>
+
+      <form onsubmit="handleAccountUpdate(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Nama Lengkap</label>
+          <input type="text" id="acc-fullname" class="w-full p-2.5 border rounded-xl text-xs" placeholder="Nama Anda" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Nomor WhatsApp / HP</label>
+          <input type="text" id="acc-phone" class="w-full p-2.5 border rounded-xl text-xs" placeholder="08123456789" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Alamat Email</label>
+          <input type="email" id="acc-email" class="w-full p-2.5 border rounded-xl text-xs" placeholder="email@contoh.com" />
+        </div>
+        <div class="pt-2 border-t">
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Ganti Password (Kosongkan jika tidak diubah)</label>
+          <input type="password" id="acc-new-pass" class="w-full p-2.5 border rounded-xl text-xs" placeholder="Password baru" />
+        </div>
+        <button type="submit" class="w-full bg-theme text-white py-2.5 rounded-xl font-bold text-xs shadow hover-theme mt-2">
+          Simpan Pembaruan Profil Akun
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <!-- ================= 10. TAB PENGATURAN TOKO & TEMA ================= -->
   <main id="tab-settings" class="tab-content hidden max-w-4xl w-full mx-auto p-4 space-y-5">
-    <!-- Visual Theming & Logo Upload -->
     <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-      <h3 class="font-bold text-sm text-gray-800">Kustomisasi Tema, Logo, & Wallpaper</h3>
+      <h3 class="font-bold text-sm text-gray-800">Kustomisasi Tema & Foto Profil Toko</h3>
       <div class="flex flex-wrap gap-3 items-center">
-        <button onclick="setThemeColor('#22c55e', '#15803d')" class="w-9 h-9 rounded-full bg-[#22c55e] shadow-md border-2 border-white ring-2 ring-gray-200" title="Light Green Enterprise"></button>
-        <button onclick="setThemeColor('#ea3829', '#b91c1c')" class="w-9 h-9 rounded-full bg-[#ea3829] shadow-md border-2 border-white ring-2 ring-gray-200" title="Coral Red"></button>
-        <button onclick="setThemeColor('#ea580c', '#c2410c')" class="w-9 h-9 rounded-full bg-[#ea580c] shadow-md border-2 border-white ring-2 ring-gray-200" title="Warm Orange"></button>
-        <button onclick="setThemeColor('#2563eb', '#1d4ed8')" class="w-9 h-9 rounded-full bg-[#2563eb] shadow-md border-2 border-white ring-2 ring-gray-200" title="Modern Blue"></button>
+        <button onclick="setThemeColor('#22c55e', '#15803d')" class="w-9 h-9 rounded-full bg-[#22c55e] shadow-md border-2 border-white ring-2 ring-gray-200" title="Hijau Muda"></button>
+        <button onclick="setThemeColor('#ea3829', '#b91c1c')" class="w-9 h-9 rounded-full bg-[#ea3829] shadow-md border-2 border-white ring-2 ring-gray-200" title="Merah Qasir"></button>
+        <button onclick="setThemeColor('#ea580c', '#c2410c')" class="w-9 h-9 rounded-full bg-[#ea580c] shadow-md border-2 border-white ring-2 ring-gray-200" title="Oranye"></button>
+        <button onclick="setThemeColor('#2563eb', '#1d4ed8')" class="w-9 h-9 rounded-full bg-[#2563eb] shadow-md border-2 border-white ring-2 ring-gray-200" title="Biru"></button>
         <div class="flex items-center gap-2 ml-2">
           <input type="color" id="custom-color-picker" onchange="setThemeColor(this.value, this.value)" class="w-8 h-8 rounded-full cursor-pointer" />
-          <span class="text-xs text-gray-500 font-semibold">Warna Utama Bebas</span>
+          <span class="text-xs text-gray-500 font-semibold">Pilih Warna Bebas</span>
         </div>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1">Unggah Logo Toko</label>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Foto Profil / Logo Toko (Akan muncul di header kasir)</label>
           <input type="file" accept="image/*" onchange="handleLogoUpload(event)" class="text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100" />
         </div>
         <div>
@@ -367,7 +427,7 @@
       </div>
     </div>
 
-    <!-- Identitas & Parameter Toko -->
+    <!-- Identitas & Konfigurasi -->
     <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
       <h3 class="font-bold text-sm text-gray-800">Identitas Toko & Konfigurasi Finansial</h3>
       <form onsubmit="saveStoreSettings(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -376,7 +436,7 @@
           <input type="text" id="setting-store-name" class="w-full p-2 border rounded-xl text-xs" required />
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1">Nomor Telepon / WhatsApp</label>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Nomor WhatsApp / Telp</label>
           <input type="text" id="setting-store-phone" class="w-full p-2 border rounded-xl text-xs" />
         </div>
         <div class="sm:col-span-2">
@@ -401,19 +461,17 @@
       </form>
     </div>
 
-    <!-- Backup & Restore Data -->
+    <!-- Backup JSON -->
     <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-      <h3 class="font-bold text-sm text-gray-800">Pencadangan (Backup & Restore)</h3>
-      <p class="text-xs text-gray-500">Unduh seluruh basis data transaksi, produk, dan user dalam format JSON untuk cadangan berkala.</p>
-      <div class="flex gap-2">
-        <button onclick="backupSystemData()" class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-xl text-xs font-bold shadow">
-          💾 Download Backup Data (.json)
-        </button>
-      </div>
+      <h3 class="font-bold text-sm text-gray-800">Pencadangan Data (Backup)</h3>
+      <p class="text-xs text-gray-500">Unduh seluruh basis data transaksi, produk, dan pengaturan dalam format JSON.</p>
+      <button onclick="backupSystemData()" class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-xl text-xs font-bold shadow">
+        💾 Download Backup Data (.json)
+      </button>
     </div>
   </main>
 
-  <!-- ================= 10. MODAL PEMBAYARAN KASIR ================= -->
+  <!-- ================= 11. MODAL PEMBAYARAN KASIR ================= -->
   <div id="payment-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
       <h3 class="font-bold text-base text-gray-800">Checkout & Pembayaran</h3>
@@ -451,42 +509,72 @@
 
       <div class="flex gap-2">
         <button onclick="closePaymentModal()" class="w-1/2 py-2.5 border rounded-xl text-xs font-bold text-gray-500">Batal</button>
-        <button onclick="processTransaction()" class="w-1/2 bg-theme text-white py-2.5 rounded-xl text-xs font-bold shadow hover-theme">Bayar & Cetak</button>
+        <button onclick="processTransaction()" class="w-1/2 bg-theme text-white py-2.5 rounded-xl text-xs font-bold shadow hover-theme">Bayar & Buat Struk</button>
       </div>
     </div>
   </div>
 
-  <!-- ================= 11. STRUK THERMAL CETAK ================= -->
-  <div id="printable-receipt" class="hidden text-xs leading-tight">
-    <div style="text-align: center; margin-bottom: 5px;">
-      <h2 style="font-size: 14px; font-weight: bold; margin: 0;" id="rcpt-store">WARUNG NUSANTARA</h2>
-      <p style="margin: 0; font-size: 10px;" id="rcpt-address">-</p>
-      <p style="margin: 0; font-size: 10px;" id="rcpt-phone">-</p>
+  <!-- ================= 12. MODAL STRUK DENGAN CETAK THERMAL & DIGITAL PDF ================= -->
+  <div id="receipt-preview-modal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-gray-800 text-sm">Pratinjau Struk Pembayaran</h3>
+        <button onclick="closeReceiptModal()" class="text-gray-400 hover:text-gray-700 text-lg font-bold">&times;</button>
+      </div>
+
+      <!-- Kertas Struk Nyata -->
+      <div class="flex-1 overflow-y-auto bg-gray-50 p-3 rounded-xl border border-gray-200">
+        <div id="receipt-paper" class="bg-white p-4 rounded shadow-sm text-xs font-mono text-gray-900 leading-tight">
+          <div class="text-center space-y-1 mb-2">
+            <div id="rcpt-logo-container" class="w-10 h-10 rounded-full mx-auto overflow-hidden hidden"></div>
+            <h2 class="text-sm font-black" id="rcpt-store">WARUNG NUSANTARA</h2>
+            <p class="text-[10px] text-gray-600" id="rcpt-address">-</p>
+            <p class="text-[10px] text-gray-600" id="rcpt-phone">-</p>
+          </div>
+          <div class="border-b border-dashed border-gray-400 my-2"></div>
+          <div class="text-[10px] space-y-0.5">
+            <p>No: <span id="rcpt-inv" class="font-bold">-</span></p>
+            <p>Waktu: <span id="rcpt-time">-</span></p>
+            <p>Kasir: <span id="rcpt-cashier">-</span></p>
+          </div>
+          <div class="border-b border-dashed border-gray-400 my-2"></div>
+          <div id="rcpt-items-list" class="space-y-1 text-[11px]"></div>
+          <div class="border-b border-dashed border-gray-400 my-2"></div>
+          <div class="space-y-1 text-[11px]">
+            <div class="flex justify-between"><span>Subtotal:</span><span id="rcpt-subtotal">Rp 0</span></div>
+            <div class="flex justify-between"><span>Diskon:</span><span id="rcpt-disc">Rp 0</span></div>
+            <div class="flex justify-between"><span>Pajak (PB1):</span><span id="rcpt-tax">Rp 0</span></div>
+            <div class="flex justify-between font-black text-xs pt-1 border-t border-dotted"><span>TOTAL:</span><span id="rcpt-total">Rp 0</span></div>
+            <div class="flex justify-between"><span>Bayar (<span id="rcpt-method">Cash</span>):</span><span id="rcpt-pay">Rp 0</span></div>
+            <div class="flex justify-between font-bold text-emerald-700"><span>Kembalian:</span><span id="rcpt-change">Rp 0</span></div>
+          </div>
+          <div class="border-b border-dashed border-gray-400 my-2"></div>
+          <p class="text-center text-[10px] text-gray-600 mt-2" id="rcpt-footer">Terima kasih atas kunjungan Anda!</p>
+        </div>
+      </div>
+
+      <!-- Tombol Aksi: Cetak Thermal, Digital PDF, WhatsApp -->
+      <div class="space-y-2">
+        <button onclick="executePrint()" class="w-full bg-theme text-white py-2.5 rounded-xl font-bold text-xs shadow hover-theme flex items-center justify-center gap-2">
+          <span>🖨️ Cetak Struk (Printer Bluetooth/Thermal)</span>
+        </button>
+        <button onclick="executePrintPDF()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-2">
+          <span>📄 Cetak / Simpan Digital PDF</span>
+        </button>
+        <div class="flex gap-2">
+          <button onclick="shareReceiptWhatsApp()" class="w-1/2 bg-emerald-600 text-white py-2 rounded-xl font-bold text-xs shadow hover:bg-emerald-700 flex items-center justify-center gap-1">
+            <span>💬 Kirim ke WA</span>
+          </button>
+          <button onclick="closeReceiptModal()" class="w-1/2 border border-gray-300 py-2 rounded-xl font-bold text-xs text-gray-600 hover:bg-gray-100">
+            Tutup
+          </button>
+        </div>
+      </div>
     </div>
-    <div style="border-bottom: 1px dashed #000; margin: 4px 0;"></div>
-    <div style="font-size: 10px;">
-      <p style="margin: 0;">No: <span id="rcpt-inv">-</span></p>
-      <p style="margin: 0;">Waktu: <span id="rcpt-time">-</span></p>
-      <p style="margin: 0;">Kasir: <span id="rcpt-cashier">Kasir</span></p>
-    </div>
-    <div style="border-bottom: 1px dashed #000; margin: 4px 0;"></div>
-    <div id="rcpt-items-list" style="font-size: 10px;"></div>
-    <div style="border-bottom: 1px dashed #000; margin: 4px 0;"></div>
-    <div style="font-size: 10px;">
-      <div style="display: flex; justify-content: space-between;"><span>Subtotal:</span><span id="rcpt-subtotal">Rp 0</span></div>
-      <div style="display: flex; justify-content: space-between;"><span>Diskon:</span><span id="rcpt-disc">Rp 0</span></div>
-      <div style="display: flex; justify-content: space-between;"><span>Pajak:</span><span id="rcpt-tax">Rp 0</span></div>
-      <div style="display: flex; justify-content: space-between; font-weight: bold;"><span>Total Akhir:</span><span id="rcpt-total">Rp 0</span></div>
-      <div style="display: flex; justify-content: space-between;"><span>Bayar (<span id="rcpt-method">Tunai</span>):</span><span id="rcpt-pay">Rp 0</span></div>
-      <div style="display: flex; justify-content: space-between;"><span>Kembali:</span><span id="rcpt-change">Rp 0</span></div>
-    </div>
-    <div style="border-bottom: 1px dashed #000; margin: 4px 0;"></div>
-    <p style="text-align: center; font-size: 9px; margin-top: 4px;" id="rcpt-footer">Terima kasih atas kunjungan Anda!</p>
   </div>
 
-  <!-- ================= 12. LOGIKA APLIKASI JAVASCRIPT ================= -->
+  <!-- ================= 13. LOGIKA UTAMA JAVASCRIPT ================= -->
   <script>
-    // FUNGSI KEAMANAN: Hashing SHA-256 via Web Crypto API
     async function hashPassword(plainText) {
       const msgUint8 = new TextEncoder().encode(plainText);
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
@@ -494,10 +582,9 @@
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // Default Data State
     const defaultUsers = [
-      { id: 1, username: 'admin', passHash: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', role: 'admin', active: true }, // admin123
-      { id: 2, username: 'kasir', passHash: '2ac9a6746aca543af9d52fc830e0a1f3792dced04c8125aad43cb01a09a758f2', role: 'kasir', active: true }  // kasir123
+      { id: 1, username: 'admin', passHash: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', role: 'admin', active: true, fullname: 'Administrator Toko', phone: '08123456789', email: 'admin@toko.com' },
+      { id: 2, username: 'kasir', passHash: '2ac9a6746aca543af9d52fc830e0a1f3792dced04c8125aad43cb01a09a758f2', role: 'kasir', active: true, fullname: 'Kasir Pegawai', phone: '08987654321', email: 'kasir@toko.com' }
     ];
 
     const defaultProducts = [
@@ -531,6 +618,7 @@
     let selectedCategory = 'Semua';
     let chartTrend = null;
     let chartPayment = null;
+    let activeTransactionForReceipt = null;
 
     window.onload = () => {
       applyStoreVisuals();
@@ -552,9 +640,15 @@
         document.getElementById('app-body').style.backgroundImage = 'none';
       }
       document.getElementById('login-store-title').innerText = store.name.toUpperCase();
+      document.getElementById('header-store-name').innerText = store.name.toUpperCase();
+
+      // Pasang foto profil / logo toko di header dan struk
       if (store.logo) {
         document.getElementById('login-logo-container').innerHTML = `<img src="${store.logo}" class="w-full h-full object-cover" />`;
-        document.getElementById('store-header-logo-box').innerHTML = `<img src="${store.logo}" class="w-full h-full object-cover" />`;
+        document.getElementById('store-header-logo-box').innerHTML = `<img src="${store.logo}" class="w-full h-full object-cover rounded-full" />`;
+        const rcptLogo = document.getElementById('rcpt-logo-container');
+        rcptLogo.innerHTML = `<img src="${store.logo}" class="w-full h-full object-cover rounded-full" />`;
+        rcptLogo.classList.remove('hidden');
       }
     }
 
@@ -567,7 +661,7 @@
 
       const found = users.find(u => u.username === uname && u.passHash === hash);
       if (!found) {
-        err.innerText = 'Username atau kata sandi tidak valid!';
+        err.innerText = 'Username atau password salah!';
         err.classList.remove('hidden');
         return;
       }
@@ -591,9 +685,17 @@
     }
 
     function setupUserInterface() {
-      document.getElementById('user-display-name').innerText = currentUser.username;
+      document.getElementById('user-display-name').innerText = currentUser.fullname || currentUser.username;
       document.getElementById('user-avatar-initial').innerText = currentUser.username.charAt(0).toUpperCase();
       document.getElementById('user-role-badge').innerText = currentUser.role.toUpperCase();
+
+      // Isi data pengaturan akun
+      document.getElementById('profile-display-username').innerText = currentUser.username;
+      document.getElementById('profile-display-role').innerText = currentUser.role === 'admin' ? 'Administrator (Full Access)' : 'Kasir / Pegawai';
+      document.getElementById('profile-avatar-large').innerText = currentUser.username.charAt(0).toUpperCase();
+      document.getElementById('acc-fullname').value = currentUser.fullname || '';
+      document.getElementById('acc-phone').value = currentUser.phone || '';
+      document.getElementById('acc-email').value = currentUser.email || '';
 
       if (currentUser.role !== 'admin') {
         document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
@@ -610,6 +712,13 @@
       renderReportsTable();
       updateDashboard();
       populateStoreSettings();
+    }
+
+    function openSettingsTab() {
+      if (currentUser.role !== 'admin') {
+        return alert('Akses ditolak: Pengaturan Toko khusus Administrator. Anda dapat mengakses "Pengaturan Akun" untuk data profil Anda.');
+      }
+      switchTab('settings');
     }
 
     function switchTab(tabId) {
@@ -630,6 +739,34 @@
       if (tabId === 'dashboard') updateDashboard();
     }
 
+    // --- PENGATURAN AKUN (PROFIL, NO HP, EMAIL, PASSWORD) ---
+    async function handleAccountUpdate(e) {
+      e.preventDefault();
+      const fn = document.getElementById('acc-fullname').value.trim();
+      const ph = document.getElementById('acc-phone').value.trim();
+      const em = document.getElementById('acc-email').value.trim();
+      const newPass = document.getElementById('acc-new-pass').value.trim();
+
+      const uIdx = users.findIndex(u => u.id === currentUser.id);
+      if (uIdx !== -1) {
+        users[uIdx].fullname = fn;
+        users[uIdx].phone = ph;
+        users[uIdx].email = em;
+
+        if (newPass) {
+          users[uIdx].passHash = await hashPassword(newPass);
+        }
+
+        currentUser = users[uIdx];
+        localStorage.setItem('qpos_users', JSON.stringify(users));
+        sessionStorage.setItem('qpos_current_user', JSON.stringify(currentUser));
+        setupUserInterface();
+        document.getElementById('acc-new-pass').value = '';
+        alert('Data profil akun Anda berhasil diperbarui!');
+      }
+    }
+
+    // --- KASIR & MENU ---
     function renderCategories() {
       const cats = ['Semua', 'Makanan', 'Minuman', 'Hotplate', 'Nasi', 'Camilan'];
       const container = document.getElementById('category-pills');
@@ -803,7 +940,7 @@
         invoice: inv,
         date: dateObj.toLocaleDateString('id-ID'),
         timestamp: dateObj.getTime(),
-        cashier: currentUser.username,
+        cashier: currentUser.fullname || currentUser.username,
         items: [...cart],
         subtotal,
         discount: discVal,
@@ -816,16 +953,18 @@
       transactions.unshift(trx);
       localStorage.setItem('qpos_transactions', JSON.stringify(transactions));
 
-      printThermalReceipt(trx);
-      clearCart();
+      activeTransactionForReceipt = trx;
       closePaymentModal();
+      clearCart();
       renderMenuCatalog();
       renderProductsTable();
       renderReportsTable();
       updateDashboard();
+
+      openReceiptModal(trx);
     }
 
-    function printThermalReceipt(trx) {
+    function openReceiptModal(trx) {
       document.getElementById('rcpt-store').innerText = store.name;
       document.getElementById('rcpt-address').innerText = store.address;
       document.getElementById('rcpt-phone').innerText = store.phone;
@@ -834,7 +973,7 @@
       document.getElementById('rcpt-cashier').innerText = trx.cashier;
 
       document.getElementById('rcpt-items-list').innerHTML = trx.items.map(i => `
-        <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+        <div class="flex justify-between">
           <span>${i.name} x${i.qty}</span>
           <span>Rp ${(i.qty * i.sell).toLocaleString('id-ID')}</span>
         </div>
@@ -849,10 +988,44 @@
       document.getElementById('rcpt-change').innerText = `Rp ${trx.change.toLocaleString('id-ID')}`;
       document.getElementById('rcpt-footer').innerText = store.footer;
 
+      document.getElementById('receipt-preview-modal').classList.remove('hidden');
+    }
+
+    function closeReceiptModal() {
+      document.getElementById('receipt-preview-modal').classList.add('hidden');
+    }
+
+    function executePrint() {
       window.print();
     }
 
-    // Dashboard Analytics (Chart.js Integration)
+    function executePrintPDF() {
+      // Buka dialog print browser untuk disimpan sebagai PDF
+      window.print();
+    }
+
+    function shareReceiptWhatsApp() {
+      if (!activeTransactionForReceipt) return;
+      const t = activeTransactionForReceipt;
+      let text = `*STRUK PEMBAYARAN - ${store.name}*\n`;
+      text += `No: ${t.invoice}\n`;
+      text += `Waktu: ${new Date(t.timestamp).toLocaleString('id-ID')}\n`;
+      text += `Kasir: ${t.cashier}\n`;
+      text += `--------------------------------\n`;
+      t.items.forEach(i => {
+        text += `${i.name} x${i.qty} = Rp ${(i.qty * i.sell).toLocaleString('id-ID')}\n`;
+      });
+      text += `--------------------------------\n`;
+      text += `*Total: Rp ${t.total.toLocaleString('id-ID')}*\n`;
+      text += `Bayar: Rp ${t.pay.toLocaleString('id-ID')} (${t.method})\n`;
+      text += `Kembali: Rp ${t.change.toLocaleString('id-ID')}\n`;
+      text += `--------------------------------\n`;
+      text += `${store.footer}`;
+
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    // --- DASHBOARD ANALYTICS ---
     function updateDashboard() {
       if (!document.getElementById('salesTrendChart')) return;
       const filter = document.getElementById('dash-filter').value;
@@ -868,10 +1041,6 @@
         }
         if (filter === '7days') return now - tDate <= 7 * 24 * 60 * 60 * 1000;
         if (filter === 'thismonth') return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
-        if (filter === 'prevmonth') {
-          const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          return tDate.getMonth() === prev.getMonth() && tDate.getFullYear() === prev.getFullYear();
-        }
         return true;
       });
 
@@ -896,7 +1065,6 @@
       document.getElementById('dash-items-sold').innerText = itemsSold;
       document.getElementById('dash-profit').innerText = `Rp ${profit.toLocaleString('id-ID')}`;
 
-      // Chart: Tren Penjualan Harian
       const ctxTrend = document.getElementById('salesTrendChart').getContext('2d');
       if (chartTrend) chartTrend.destroy();
       chartTrend = new Chart(ctxTrend, {
@@ -915,7 +1083,6 @@
         options: { responsive: true, maintainAspectRatio: false }
       });
 
-      // Chart: Metode Pembayaran
       const ctxPay = document.getElementById('paymentMethodChart').getContext('2d');
       if (chartPayment) chartPayment.destroy();
       chartPayment = new Chart(ctxPay, {
@@ -930,7 +1097,6 @@
         options: { responsive: true, maintainAspectRatio: false }
       });
 
-      // Top Products list
       const sortedProds = Object.entries(productCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
       const topList = document.getElementById('top-products-list');
       topList.innerHTML = sortedProds.length ? sortedProds.map(([name, q]) => `
@@ -940,7 +1106,6 @@
         </div>
       `).join('') : '<p class="text-gray-400 py-2">Belum ada data produk terjual.</p>';
 
-      // Cashier Contribution list
       const cashList = document.getElementById('cashier-performance-list');
       cashList.innerHTML = Object.entries(cashierSales).map(([c, total]) => `
         <div class="py-2 flex justify-between items-center">
@@ -950,7 +1115,7 @@
       `).join('') || '<p class="text-gray-400 py-2">Belum ada transaksi.</p>';
     }
 
-    // CRUD Produk
+    // --- PRODUK & USER ---
     function previewProductImg(e) {
       const file = e.target.files[0];
       if (file) {
@@ -1047,7 +1212,6 @@
       `).join('');
     }
 
-    // User Management (RBAC)
     async function handleUserSubmit(e) {
       e.preventDefault();
       const uname = document.getElementById('user-uname').value.trim();
@@ -1057,7 +1221,7 @@
       if (users.some(u => u.username === uname)) return alert('Username sudah digunakan!');
 
       const passHash = await hashPassword(pass);
-      users.push({ id: Date.now(), username: uname, passHash, role, active: true });
+      users.push({ id: Date.now(), username: uname, passHash, role, active: true, fullname: uname, phone: '-', email: '-' });
       localStorage.setItem('qpos_users', JSON.stringify(users));
       document.getElementById('user-uname').value = '';
       document.getElementById('user-pass').value = '';
@@ -1090,7 +1254,8 @@
       list.innerHTML = users.map(u => `
         <div class="py-3 flex justify-between items-center">
           <div>
-            <p class="font-bold text-gray-800">${u.username} <span class="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded uppercase font-semibold text-gray-600">${u.role}</span></p>
+            <p class="font-bold text-gray-800">${u.fullname || u.username} (@${u.username}) <span class="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded uppercase font-semibold text-gray-600">${u.role}</span></p>
+            <p class="text-[10px] text-gray-400">Telp: ${u.phone || '-'} | Email: ${u.email || '-'}</p>
             <p class="text-[10px] ${u.active ? 'text-emerald-600 font-bold' : 'text-red-500 font-bold'}">${u.active ? 'Status: Aktif' : 'Status: Nonaktif'}</p>
           </div>
           <div class="space-x-2">
@@ -1101,13 +1266,13 @@
       `).join('');
     }
 
-    // Laporan & Riwayat Transaksi
+    // --- LAPORAN & EKSPOR ---
     function renderReportsTable() {
       const q = document.getElementById('report-search').value.toLowerCase();
       const container = document.getElementById('reports-table-container');
 
       const filtered = transactions.filter(t => {
-        const allowed = currentUser.role === 'admin' ? true : t.cashier === currentUser.username;
+        const allowed = currentUser.role === 'admin' ? true : t.cashier === (currentUser.fullname || currentUser.username);
         const match = t.invoice.toLowerCase().includes(q) || t.cashier.toLowerCase().includes(q);
         return allowed && match;
       });
@@ -1126,9 +1291,15 @@
           </div>
           <div class="text-right">
             <p class="font-black text-theme text-sm">Rp ${t.total.toLocaleString('id-ID')}</p>
+            <button onclick='reprintFromHistory(${JSON.stringify(t)})' class="text-[10px] text-blue-600 font-bold hover:underline mt-1">Lihat / Cetak Struk</button>
           </div>
         </div>
       `).join('');
+    }
+
+    function reprintFromHistory(t) {
+      activeTransactionForReceipt = t;
+      openReceiptModal(t);
     }
 
     function exportToExcel() {
@@ -1153,7 +1324,7 @@
       window.print();
     }
 
-    // Kustomisasi & Toko
+    // --- PENGATURAN TOKO & TEMA ---
     function setThemeColor(primary, sec) {
       store.color = primary;
       store.secColor = sec;
@@ -1171,7 +1342,7 @@
           store.logo = evt.target.result;
           localStorage.setItem('qpos_store', JSON.stringify(store));
           applyStoreVisuals();
-          alert('Logo toko berhasil diperbarui!');
+          alert('Foto profil / logo toko berhasil diperbarui!');
         };
         r.readAsDataURL(file);
       }
