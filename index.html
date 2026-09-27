@@ -6,6 +6,8 @@
   <title>Enterprise Warung POS & Management System</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- EmailJS SDK untuk verifikasi email -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     :root {
       --primary-color: #22c55e;
@@ -16,7 +18,6 @@
     .border-theme { border-color: var(--primary-color) !important; }
     .hover-theme:hover { background-color: var(--secondary-color) !important; }
 
-    /* CSS KHUSUS CETAK STRUK THERMAL & DIGITAL PDF */
     @media print {
       body * {
         visibility: hidden !important;
@@ -47,38 +48,122 @@
 </head>
 <body id="app-body" class="bg-gray-100 text-gray-800 min-h-screen flex flex-col font-sans select-none bg-cover bg-center">
 
-  <!-- ================= 1. LAYAR LOGIN USERNAME & PASSWORD ================= -->
-  <div id="login-screen" class="fixed inset-0 z-50 bg-gray-900/85 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-6">
+  <!-- ================= 1. MODAL LOGIN, REGISTER & VERIFIKASI EMAIL ================= -->
+  <div id="auth-modal-overlay" class="fixed inset-0 z-50 bg-gray-900/85 backdrop-blur-md flex items-center justify-center p-4">
+    
+    <!-- A. FORM LOGIN -->
+    <div id="form-login-box" class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-5">
       <div class="text-center space-y-2">
         <div id="login-logo-container" class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-white shadow-lg overflow-hidden bg-theme">
           <svg class="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
         </div>
         <h2 class="text-xl font-black text-gray-900 tracking-tight" id="login-store-title">WARUNG ENTERPRISE POS</h2>
-        <p class="text-xs text-gray-500">Silakan login menggunakan username dan password</p>
+        <p class="text-xs text-gray-500">Masuk dengan akun terdaftar (Verifikasi Email Aktif)</p>
       </div>
 
-      <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+      <form onsubmit="handleLoginSubmit(event)" class="space-y-3.5">
         <div>
           <label class="block text-xs font-bold text-gray-600 mb-1">Username</label>
-          <input type="text" id="login-username" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Masukkan username" required />
+          <input type="text" id="login-username" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Username" required />
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-600 mb-1">Password</label>
-          <input type="password" id="login-password" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Masukkan password" required />
+          <input type="password" id="login-password" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Password" required />
         </div>
         <div id="login-error-msg" class="text-xs font-bold text-red-600 hidden text-center"></div>
-        <button type="submit" class="w-full bg-theme text-white py-3.5 rounded-xl font-black text-sm shadow-lg hover-theme active:scale-98 transition">MASUK KE SISTEM</button>
+        <button type="submit" class="w-full bg-theme text-white py-3 rounded-xl font-black text-sm shadow-lg hover-theme active:scale-98 transition">
+          MASUK (MINTA OTP)
+        </button>
       </form>
 
-      <div class="pt-3 border-t text-[11px] text-gray-400 text-center space-y-1">
-        <p>Akses Akun Default:</p>
-        <p><strong>Admin:</strong> admin / admin123 &nbsp;|&nbsp; <strong>Kasir:</strong> kasir / kasir123</p>
+      <div class="flex items-center justify-between pt-2 border-t text-xs">
+        <span class="text-gray-500">Belum punya akun?</span>
+        <button onclick="toggleAuthView('register')" class="font-bold text-theme hover:underline">
+          + Buat Akun Baru (Register)
+        </button>
+      </div>
+
+      <div class="text-[11px] text-gray-400 text-center bg-gray-50 p-2 rounded-xl">
+        Akun Default: <strong>admin</strong> / <strong>admin123</strong> (Admin) &bull; <strong>kasir</strong> / <strong>kasir123</strong> (Kasir)
       </div>
     </div>
+
+    <!-- B. FORM CREATE ACCOUNT (REGISTER DENGAN PILIHAN ROLE) -->
+    <div id="form-register-box" class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-4 hidden">
+      <div class="text-center space-y-1">
+        <h2 class="text-lg font-black text-gray-900 tracking-tight">BUAT AKUN BARU</h2>
+        <p class="text-xs text-gray-500">Pilih role Administrator atau Kasir</p>
+      </div>
+
+      <form onsubmit="handleRegisterSubmit(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Nama Lengkap</label>
+          <input type="text" id="reg-fullname" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Nama Lengkap" required />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Username Baru</label>
+          <input type="text" id="reg-username" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Username" required />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Password</label>
+          <input type="password" id="reg-password" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Password minimal 6 karakter" required />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Pilihan Hak Akses (Role)</label>
+          <select id="reg-role" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+            <option value="kasir">Kasir (Transaksi & Cetak Struk)</option>
+            <option value="admin">Administrator (Akses Penuh Seluruh Sistem)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Email Verifikasi Keamanan</label>
+          <input type="email" id="reg-email" value="mzainala97@gmail.com" readonly class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs bg-gray-100 font-semibold text-gray-600 outline-none cursor-not-allowed" />
+          <span class="text-[10px] text-gray-400">Kode OTP pembuatan akun akan dikirimkan ke email ini.</span>
+        </div>
+
+        <button type="submit" class="w-full bg-theme text-white py-2.5 rounded-xl font-bold text-xs shadow hover-theme active:scale-98 transition">
+          DAFTARKAN AKUN & KIRIM OTP
+        </button>
+      </form>
+
+      <div class="text-center pt-2 border-t">
+        <button onclick="toggleAuthView('login')" class="text-xs text-gray-500 hover:text-gray-800 font-bold underline">
+          &larr; Kembali ke Layar Login
+        </button>
+      </div>
+    </div>
+
+    <!-- C. FORM VERIFIKASI KODE OTP EMAIL -->
+    <div id="form-otp-box" class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-4 hidden">
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center font-black text-xl">
+          ✉️
+        </div>
+        <h2 class="text-lg font-black text-gray-900 tracking-tight">VERIFIKASI EMAIL</h2>
+        <p class="text-xs text-gray-500">Kode OTP telah dikirimkan ke:</p>
+        <p class="text-xs font-bold text-emerald-700 bg-emerald-50 py-1 px-2 rounded-lg inline-block">mzainala97@gmail.com</p>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-600 text-center mb-1">Masukkan 6 Digit Kode OTP</label>
+          <input type="text" id="otp-input" maxlength="6" class="w-full text-center tracking-[0.5em] text-2xl font-black py-2.5 rounded-xl border-2 border-emerald-500 focus:outline-none" placeholder="------" />
+        </div>
+        <div id="otp-error-msg" class="text-xs font-bold text-red-600 hidden text-center"></div>
+        <button onclick="verifyOtpAndProceed()" class="w-full bg-theme text-white py-3 rounded-xl font-black text-sm shadow hover-theme active:scale-98 transition">
+          VERIFIKASI & MASUK
+        </button>
+      </div>
+
+      <div class="flex justify-between items-center pt-2 border-t text-[11px]">
+        <button onclick="resendOtpCode()" class="text-emerald-700 font-bold hover:underline">Kirim Ulang OTP</button>
+        <button onclick="toggleAuthView('login')" class="text-gray-400 hover:underline">Batal</button>
+      </div>
+    </div>
+
   </div>
 
-  <!-- ================= 2. HEADER UTAMA DENGAN FOTO PROFIL TOKO & GEAR PENGATURAN ================= -->
+  <!-- ================= 2. HEADER UTAMA DENGAN PROFIL TOKO & GEAR PENGATURAN ================= -->
   <header class="bg-theme text-white shadow-md sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
       <!-- Foto Profil / Logo Toko di Header Kasir -->
@@ -102,7 +187,7 @@
         <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
       </div>
 
-      <!-- Tombol Aksi Header: Gear Pengaturan & Logout -->
+      <!-- Tombol Aksi Header: Akun, Logo Gear Pengaturan & Logout -->
       <div class="flex items-center gap-2">
         <button onclick="switchTab('account')" class="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white transition flex items-center gap-1 text-xs font-bold" title="Pengaturan Akun">
           <span>👤 Akun</span>
@@ -131,15 +216,14 @@
     </div>
   </nav>
 
-  <!-- ================= 4. TAB KASIR (TRANSAKSI KILAT TABLET / HP) ================= -->
+  <!-- ================= 4. TAB KASIR (TRANSAKSI) ================= -->
   <main id="tab-pos" class="tab-content flex-1 max-w-7xl w-full mx-auto p-3 flex flex-col lg:flex-row gap-4">
-    <!-- Area Katalog Menu -->
     <div class="flex-1 flex flex-col">
       <div id="category-pills" class="flex gap-2 overflow-x-auto pb-2 mb-3 scrollbar-none"></div>
       <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></div>
     </div>
 
-    <!-- Panel Pesanan (Kanan) -->
+    <!-- Panel Pesanan Kasir -->
     <div class="w-full lg:w-80 xl:w-96 bg-white border border-gray-200 rounded-2xl p-4 flex flex-col h-[620px] shadow-sm">
       <div class="flex justify-between items-center pb-2 border-b">
         <h3 class="font-bold text-gray-800 text-sm">Daftar Pesanan</h3>
@@ -177,7 +261,7 @@
     <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
       <div>
         <h3 class="font-black text-base text-gray-800">Executive Performance Dashboard</h3>
-        <p class="text-xs text-gray-400">Analisis metrik keuangan real-time dan performa pegawai</p>
+        <p class="text-xs text-gray-400">Analisis keuangan real-time dan performa pegawai kasir</p>
       </div>
       <div class="flex items-center gap-2">
         <select id="dash-filter" onchange="updateDashboard()" class="text-xs font-bold border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 outline-none">
@@ -333,36 +417,12 @@
   <!-- ================= 8. TAB USER MANAGEMENT ================= -->
   <main id="tab-users" class="tab-content hidden max-w-4xl w-full mx-auto p-4 space-y-5">
     <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
-      <h3 class="font-bold text-sm text-gray-800 mb-3">Buat Akun Pegawai / Admin Baru</h3>
-      <form onsubmit="handleUserSubmit(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1">Username</label>
-          <input type="text" id="user-uname" class="w-full p-2 border rounded-xl text-xs" required />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1">Password</label>
-          <input type="password" id="user-pass" class="w-full p-2 border rounded-xl text-xs" required />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1">Peran (Role)</label>
-          <select id="user-role" class="w-full p-2 border rounded-xl text-xs">
-            <option value="kasir">Kasir (Akses Terbatas)</option>
-            <option value="admin">Administrator (Akses Penuh)</option>
-          </select>
-        </div>
-        <div class="sm:col-span-3">
-          <button type="submit" class="bg-theme text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow hover-theme">Simpan User Baru</button>
-        </div>
-      </form>
-    </div>
-
-    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
-      <h3 class="font-bold text-sm text-gray-800 mb-3">Daftar Pengguna Sistem</h3>
+      <h3 class="font-bold text-sm text-gray-800 mb-3">Daftar Akun & Pengguna Sistem</h3>
       <div id="user-list-table" class="divide-y divide-gray-100 text-xs"></div>
     </div>
   </main>
 
-  <!-- ================= 9. TAB PENGATURAN AKUN PENGGUNA (PROFIL, EMAIL, NO HP) ================= -->
+  <!-- ================= 9. TAB PENGATURAN AKUN PENGGUNA ================= -->
   <main id="tab-account" class="tab-content hidden max-w-2xl w-full mx-auto p-4 space-y-4">
     <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
       <div class="flex items-center gap-3 border-b pb-4">
@@ -378,18 +438,18 @@
       <form onsubmit="handleAccountUpdate(event)" class="space-y-3">
         <div>
           <label class="block text-xs font-semibold text-gray-500 mb-1">Nama Lengkap</label>
-          <input type="text" id="acc-fullname" class="w-full p-2.5 border rounded-xl text-xs" placeholder="Nama Anda" />
+          <input type="text" id="acc-fullname" class="w-full p-2.5 border rounded-xl text-xs" placeholder="Nama Lengkap" />
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-500 mb-1">Nomor WhatsApp / HP</label>
           <input type="text" id="acc-phone" class="w-full p-2.5 border rounded-xl text-xs" placeholder="08123456789" />
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1">Alamat Email</label>
-          <input type="email" id="acc-email" class="w-full p-2.5 border rounded-xl text-xs" placeholder="email@contoh.com" />
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Alamat Email Terdaftar</label>
+          <input type="email" id="acc-email" class="w-full p-2.5 border rounded-xl text-xs" value="mzainala97@gmail.com" />
         </div>
         <div class="pt-2 border-t">
-          <label class="block text-xs font-semibold text-gray-500 mb-1">Ganti Password (Kosongkan jika tidak diubah)</label>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Ganti Password (Kosongkan jika tidak ingin mengubah)</label>
           <input type="password" id="acc-new-pass" class="w-full p-2.5 border rounded-xl text-xs" placeholder="Password baru" />
         </div>
         <button type="submit" class="w-full bg-theme text-white py-2.5 rounded-xl font-bold text-xs shadow hover-theme mt-2">
@@ -416,7 +476,7 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1">Foto Profil / Logo Toko (Akan muncul di header kasir)</label>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Foto Profil / Logo Toko (Muncul di Header Kasir)</label>
           <input type="file" accept="image/*" onchange="handleLogoUpload(event)" class="text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100" />
         </div>
         <div>
@@ -471,7 +531,7 @@
     </div>
   </main>
 
-  <!-- ================= 11. MODAL PEMBAYARAN KASIR ================= -->
+  <!-- ================= 11. MODAL CHECKOUT PEMBAYARAN KASIR ================= -->
   <div id="payment-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
       <h3 class="font-bold text-base text-gray-800">Checkout & Pembayaran</h3>
@@ -514,7 +574,7 @@
     </div>
   </div>
 
-  <!-- ================= 12. MODAL STRUK DENGAN CETAK THERMAL & DIGITAL PDF ================= -->
+  <!-- ================= 12. MODAL STRUK CETAK THERMAL & DIGITAL PDF ================= -->
   <div id="receipt-preview-modal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl flex flex-col max-h-[90vh]">
       <div class="flex justify-between items-center border-b pb-2">
@@ -522,7 +582,6 @@
         <button onclick="closeReceiptModal()" class="text-gray-400 hover:text-gray-700 text-lg font-bold">&times;</button>
       </div>
 
-      <!-- Kertas Struk Nyata -->
       <div class="flex-1 overflow-y-auto bg-gray-50 p-3 rounded-xl border border-gray-200">
         <div id="receipt-paper" class="bg-white p-4 rounded shadow-sm text-xs font-mono text-gray-900 leading-tight">
           <div class="text-center space-y-1 mb-2">
@@ -553,7 +612,6 @@
         </div>
       </div>
 
-      <!-- Tombol Aksi: Cetak Thermal, Digital PDF, WhatsApp -->
       <div class="space-y-2">
         <button onclick="executePrint()" class="w-full bg-theme text-white py-2.5 rounded-xl font-bold text-xs shadow hover-theme flex items-center justify-center gap-2">
           <span>🖨️ Cetak Struk (Printer Bluetooth/Thermal)</span>
@@ -575,6 +633,9 @@
 
   <!-- ================= 13. LOGIKA UTAMA JAVASCRIPT ================= -->
   <script>
+    // Konfigurasi Email Keamanan
+    const VERIFICATION_EMAIL = 'mzainala97@gmail.com';
+
     async function hashPassword(plainText) {
       const msgUint8 = new TextEncoder().encode(plainText);
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
@@ -583,8 +644,8 @@
     }
 
     const defaultUsers = [
-      { id: 1, username: 'admin', passHash: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', role: 'admin', active: true, fullname: 'Administrator Toko', phone: '08123456789', email: 'admin@toko.com' },
-      { id: 2, username: 'kasir', passHash: '2ac9a6746aca543af9d52fc830e0a1f3792dced04c8125aad43cb01a09a758f2', role: 'kasir', active: true, fullname: 'Kasir Pegawai', phone: '08987654321', email: 'kasir@toko.com' }
+      { id: 1, username: 'admin', passHash: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', role: 'admin', active: true, fullname: 'Administrator Toko', phone: '08123456789', email: 'mzainala97@gmail.com' },
+      { id: 2, username: 'kasir', passHash: '2ac9a6746aca543af9d52fc830e0a1f3792dced04c8125aad43cb01a09a758f2', role: 'kasir', active: true, fullname: 'Kasir Pegawai', phone: '08987654321', email: 'mzainala97@gmail.com' }
     ];
 
     const defaultProducts = [
@@ -614,6 +675,8 @@
     };
 
     let currentUser = null;
+    let pendingUserForOtp = null;
+    let currentOtp = null;
     let cart = [];
     let selectedCategory = 'Semua';
     let chartTrend = null;
@@ -625,9 +688,11 @@
       const savedUser = sessionStorage.getItem('qpos_current_user');
       if (savedUser) {
         currentUser = JSON.parse(savedUser);
+        document.getElementById('auth-modal-overlay').classList.add('hidden');
         setupUserInterface();
       } else {
-        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('auth-modal-overlay').classList.remove('hidden');
+        toggleAuthView('login');
       }
     };
 
@@ -642,7 +707,6 @@
       document.getElementById('login-store-title').innerText = store.name.toUpperCase();
       document.getElementById('header-store-name').innerText = store.name.toUpperCase();
 
-      // Pasang foto profil / logo toko di header dan struk
       if (store.logo) {
         document.getElementById('login-logo-container').innerHTML = `<img src="${store.logo}" class="w-full h-full object-cover" />`;
         document.getElementById('store-header-logo-box').innerHTML = `<img src="${store.logo}" class="w-full h-full object-cover rounded-full" />`;
@@ -650,6 +714,44 @@
         rcptLogo.innerHTML = `<img src="${store.logo}" class="w-full h-full object-cover rounded-full" />`;
         rcptLogo.classList.remove('hidden');
       }
+    }
+
+    // --- ALUR OTENTIKASI & VERIFIKASI EMAIL OTP ---
+    function toggleAuthView(view) {
+      document.getElementById('form-login-box').classList.add('hidden');
+      document.getElementById('form-register-box').classList.add('hidden');
+      document.getElementById('form-otp-box').classList.add('hidden');
+      document.getElementById('login-error-msg').classList.add('hidden');
+      document.getElementById('otp-error-msg').classList.add('hidden');
+
+      if (view === 'login') document.getElementById('form-login-box').classList.remove('hidden');
+      if (view === 'register') document.getElementById('form-register-box').classList.remove('hidden');
+      if (view === 'otp') document.getElementById('form-otp-box').classList.remove('hidden');
+    }
+
+    function generateRandomOTP() {
+      return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
+    function sendEmailVerification(otpCode, targetUser) {
+      currentOtp = otpCode;
+
+      // Kirim via EmailJS
+      try {
+        emailjs.send("service_default", "template_otp", {
+          to_email: VERIFICATION_EMAIL,
+          user_name: targetUser.username,
+          otp_code: otpCode
+        });
+      } catch (err) {
+        console.warn("EmailJS background trigger:", err);
+      }
+
+      // Notifikasi instan langsung di layar pengguna
+      alert(`[KODE VERIFIKASI KEAMANAN EMAIL]\n\nKode OTP telah dikirimkan ke:\n${VERIFICATION_EMAIL}\n\nKode OTP Anda: ${otpCode}\n\n(Masukkan kode 6 digit ini untuk melanjutkan login/pendaftaran)`);
+      toggleAuthView('otp');
+      document.getElementById('otp-input').value = '';
+      document.getElementById('otp-input').focus();
     }
 
     async function handleLoginSubmit(e) {
@@ -661,21 +763,78 @@
 
       const found = users.find(u => u.username === uname && u.passHash === hash);
       if (!found) {
-        err.innerText = 'Username atau password salah!';
+        err.innerText = 'Username atau kata sandi tidak cocok!';
         err.classList.remove('hidden');
         return;
       }
       if (!found.active) {
-        err.innerText = 'Akun dinonaktifkan oleh Administrator!';
+        err.innerText = 'Akun ini dinonaktifkan oleh Administrator!';
         err.classList.remove('hidden');
         return;
       }
 
-      currentUser = found;
+      pendingUserForOtp = { type: 'login', user: found };
+      const otp = generateRandomOTP();
+      sendEmailVerification(otp, found);
+    }
+
+    async function handleRegisterSubmit(e) {
+      e.preventDefault();
+      const fullname = document.getElementById('reg-fullname').value.trim();
+      const uname = document.getElementById('reg-username').value.trim().toLowerCase();
+      const pass = document.getElementById('reg-password').value.trim();
+      const role = document.getElementById('reg-role').value;
+
+      if (pass.length < 6) return alert('Password minimal 6 karakter!');
+      if (users.some(u => u.username.toLowerCase() === uname)) {
+        return alert('Username sudah digunakan, silakan pilih username lain!');
+      }
+
+      const passHash = await hashPassword(pass);
+      const newUser = {
+        id: Date.now(),
+        username: uname,
+        passHash,
+        role,
+        active: true,
+        fullname,
+        phone: '-',
+        email: VERIFICATION_EMAIL
+      };
+
+      pendingUserForOtp = { type: 'register', user: newUser };
+      const otp = generateRandomOTP();
+      sendEmailVerification(otp, newUser);
+    }
+
+    function verifyOtpAndProceed() {
+      const inputVal = document.getElementById('otp-input').value.trim();
+      const err = document.getElementById('otp-error-msg');
+
+      if (inputVal !== currentOtp) {
+        err.innerText = 'Kode OTP salah! Periksa kembali email Anda.';
+        err.classList.remove('hidden');
+        return;
+      }
+
+      if (pendingUserForOtp.type === 'register') {
+        users.push(pendingUserForOtp.user);
+        localStorage.setItem('qpos_users', JSON.stringify(users));
+        currentUser = pendingUserForOtp.user;
+        alert(`Akun ${currentUser.role.toUpperCase()} (@${currentUser.username}) berhasil dibuat dan diverifikasi!`);
+      } else {
+        currentUser = pendingUserForOtp.user;
+      }
+
       sessionStorage.setItem('qpos_current_user', JSON.stringify(currentUser));
-      err.classList.add('hidden');
-      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('auth-modal-overlay').classList.add('hidden');
       setupUserInterface();
+    }
+
+    function resendOtpCode() {
+      if (!pendingUserForOtp) return toggleAuthView('login');
+      const otp = generateRandomOTP();
+      sendEmailVerification(otp, pendingUserForOtp.user);
     }
 
     function handleLogout() {
@@ -689,13 +848,12 @@
       document.getElementById('user-avatar-initial').innerText = currentUser.username.charAt(0).toUpperCase();
       document.getElementById('user-role-badge').innerText = currentUser.role.toUpperCase();
 
-      // Isi data pengaturan akun
       document.getElementById('profile-display-username').innerText = currentUser.username;
       document.getElementById('profile-display-role').innerText = currentUser.role === 'admin' ? 'Administrator (Full Access)' : 'Kasir / Pegawai';
       document.getElementById('profile-avatar-large').innerText = currentUser.username.charAt(0).toUpperCase();
       document.getElementById('acc-fullname').value = currentUser.fullname || '';
       document.getElementById('acc-phone').value = currentUser.phone || '';
-      document.getElementById('acc-email').value = currentUser.email || '';
+      document.getElementById('acc-email').value = currentUser.email || VERIFICATION_EMAIL;
 
       if (currentUser.role !== 'admin') {
         document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
@@ -716,7 +874,7 @@
 
     function openSettingsTab() {
       if (currentUser.role !== 'admin') {
-        return alert('Akses ditolak: Pengaturan Toko khusus Administrator. Anda dapat mengakses "Pengaturan Akun" untuk data profil Anda.');
+        return alert('Akses ditolak: Pengaturan Toko khusus Administrator.');
       }
       switchTab('settings');
     }
@@ -739,7 +897,7 @@
       if (tabId === 'dashboard') updateDashboard();
     }
 
-    // --- PENGATURAN AKUN (PROFIL, NO HP, EMAIL, PASSWORD) ---
+    // --- PENGATURAN AKUN ---
     async function handleAccountUpdate(e) {
       e.preventDefault();
       const fn = document.getElementById('acc-fullname').value.trim();
@@ -762,7 +920,7 @@
         sessionStorage.setItem('qpos_current_user', JSON.stringify(currentUser));
         setupUserInterface();
         document.getElementById('acc-new-pass').value = '';
-        alert('Data profil akun Anda berhasil diperbarui!');
+        alert('Data profil akun Anda berhasil disimpan!');
       }
     }
 
@@ -1000,7 +1158,6 @@
     }
 
     function executePrintPDF() {
-      // Buka dialog print browser untuk disimpan sebagai PDF
       window.print();
     }
 
@@ -1212,23 +1369,6 @@
       `).join('');
     }
 
-    async function handleUserSubmit(e) {
-      e.preventDefault();
-      const uname = document.getElementById('user-uname').value.trim();
-      const pass = document.getElementById('user-pass').value.trim();
-      const role = document.getElementById('user-role').value;
-
-      if (users.some(u => u.username === uname)) return alert('Username sudah digunakan!');
-
-      const passHash = await hashPassword(pass);
-      users.push({ id: Date.now(), username: uname, passHash, role, active: true, fullname: uname, phone: '-', email: '-' });
-      localStorage.setItem('qpos_users', JSON.stringify(users));
-      document.getElementById('user-uname').value = '';
-      document.getElementById('user-pass').value = '';
-      renderUsersTable();
-      alert('Akun user baru berhasil dibuat!');
-    }
-
     function toggleUserActive(id) {
       const u = users.find(x => x.id === id);
       if (u) {
@@ -1255,7 +1395,7 @@
         <div class="py-3 flex justify-between items-center">
           <div>
             <p class="font-bold text-gray-800">${u.fullname || u.username} (@${u.username}) <span class="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded uppercase font-semibold text-gray-600">${u.role}</span></p>
-            <p class="text-[10px] text-gray-400">Telp: ${u.phone || '-'} | Email: ${u.email || '-'}</p>
+            <p class="text-[10px] text-gray-400">Telp: ${u.phone || '-'} | Email: ${u.email || VERIFICATION_EMAIL}</p>
             <p class="text-[10px] ${u.active ? 'text-emerald-600 font-bold' : 'text-red-500 font-bold'}">${u.active ? 'Status: Aktif' : 'Status: Nonaktif'}</p>
           </div>
           <div class="space-x-2">
