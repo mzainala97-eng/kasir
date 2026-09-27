@@ -6,7 +6,6 @@
   <title>Enterprise Warung POS & Management System</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- EmailJS SDK untuk verifikasi email -->
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     :root {
@@ -48,17 +47,17 @@
 </head>
 <body id="app-body" class="bg-gray-100 text-gray-800 min-h-screen flex flex-col font-sans select-none bg-cover bg-center">
 
-  <!-- ================= 1. MODAL LOGIN, REGISTER & VERIFIKASI EMAIL ================= -->
+  <!-- ================= 1. MODAL OTENTIKASI (LOGIN LANGSUNG, REGISTER + OTP EMAIL) ================= -->
   <div id="auth-modal-overlay" class="fixed inset-0 z-50 bg-gray-900/85 backdrop-blur-md flex items-center justify-center p-4">
     
-    <!-- A. FORM LOGIN -->
+    <!-- A. FORM LOGIN (LANGSUNG MASUK TANPA OTP) -->
     <div id="form-login-box" class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-5">
       <div class="text-center space-y-2">
         <div id="login-logo-container" class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-white shadow-lg overflow-hidden bg-theme">
           <svg class="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
         </div>
         <h2 class="text-xl font-black text-gray-900 tracking-tight" id="login-store-title">WARUNG ENTERPRISE POS</h2>
-        <p class="text-xs text-gray-500">Masuk dengan akun terdaftar (Verifikasi Email Aktif)</p>
+        <p class="text-xs text-gray-500">Masuk menggunakan akun kasir atau administrator</p>
       </div>
 
       <form onsubmit="handleLoginSubmit(event)" class="space-y-3.5">
@@ -72,7 +71,7 @@
         </div>
         <div id="login-error-msg" class="text-xs font-bold text-red-600 hidden text-center"></div>
         <button type="submit" class="w-full bg-theme text-white py-3 rounded-xl font-black text-sm shadow-lg hover-theme active:scale-98 transition">
-          MASUK (MINTA OTP)
+          MASUK KE SISTEM
         </button>
       </form>
 
@@ -88,11 +87,11 @@
       </div>
     </div>
 
-    <!-- B. FORM CREATE ACCOUNT (REGISTER DENGAN PILIHAN ROLE) -->
+    <!-- B. FORM CREATE ACCOUNT (REGISTER DENGAN VERIFIKASI OTP EMAIL mzainala97@gmail.com) -->
     <div id="form-register-box" class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-4 hidden">
       <div class="text-center space-y-1">
         <h2 class="text-lg font-black text-gray-900 tracking-tight">BUAT AKUN BARU</h2>
-        <p class="text-xs text-gray-500">Pilih role Administrator atau Kasir</p>
+        <p class="text-xs text-gray-500">Pendaftaran akun baru memerlukan verifikasi OTP email</p>
       </div>
 
       <form onsubmit="handleRegisterSubmit(event)" class="space-y-3">
@@ -106,7 +105,7 @@
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-600 mb-1">Password</label>
-          <input type="password" id="reg-password" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Password minimal 6 karakter" required />
+          <input type="password" id="reg-password" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Password minimal 4 karakter" required />
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-600 mb-1">Pilihan Hak Akses (Role)</label>
@@ -116,7 +115,7 @@
           </select>
         </div>
         <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1">Email Verifikasi Keamanan</label>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Email Verifikasi OTP</label>
           <input type="email" id="reg-email" value="mzainala97@gmail.com" readonly class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs bg-gray-100 font-semibold text-gray-600 outline-none cursor-not-allowed" />
           <span class="text-[10px] text-gray-400">Kode OTP pembuatan akun akan dikirimkan ke email ini.</span>
         </div>
@@ -128,19 +127,19 @@
 
       <div class="text-center pt-2 border-t">
         <button onclick="toggleAuthView('login')" class="text-xs text-gray-500 hover:text-gray-800 font-bold underline">
-          &larr; Kembali ke Layar Login
+          &larr; Sudah punya akun? Masuk
         </button>
       </div>
     </div>
 
-    <!-- C. FORM VERIFIKASI KODE OTP EMAIL -->
+    <!-- C. FORM INPUT KODE OTP EMAIL -->
     <div id="form-otp-box" class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-4 hidden">
       <div class="text-center space-y-1">
         <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center font-black text-xl">
           ✉️
         </div>
         <h2 class="text-lg font-black text-gray-900 tracking-tight">VERIFIKASI EMAIL</h2>
-        <p class="text-xs text-gray-500">Kode OTP telah dikirimkan ke:</p>
+        <p class="text-xs text-gray-500">Kode OTP pembuatan akun dikirimkan ke:</p>
         <p class="text-xs font-bold text-emerald-700 bg-emerald-50 py-1 px-2 rounded-lg inline-block">mzainala97@gmail.com</p>
       </div>
 
@@ -151,7 +150,7 @@
         </div>
         <div id="otp-error-msg" class="text-xs font-bold text-red-600 hidden text-center"></div>
         <button onclick="verifyOtpAndProceed()" class="w-full bg-theme text-white py-3 rounded-xl font-black text-sm shadow hover-theme active:scale-98 transition">
-          VERIFIKASI & MASUK
+          VERIFIKASI & AKTIFKAN AKUN
         </button>
       </div>
 
@@ -216,14 +215,14 @@
     </div>
   </nav>
 
-  <!-- ================= 4. TAB KASIR (TRANSAKSI) ================= -->
+  <!-- ================= 4. TAB KASIR (TRANSAKSI KILAT) ================= -->
   <main id="tab-pos" class="tab-content flex-1 max-w-7xl w-full mx-auto p-3 flex flex-col lg:flex-row gap-4">
     <div class="flex-1 flex flex-col">
       <div id="category-pills" class="flex gap-2 overflow-x-auto pb-2 mb-3 scrollbar-none"></div>
       <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></div>
     </div>
 
-    <!-- Panel Pesanan Kasir -->
+    <!-- Panel Pesanan Kasir (Sisi Kanan) -->
     <div class="w-full lg:w-80 xl:w-96 bg-white border border-gray-200 rounded-2xl p-4 flex flex-col h-[620px] shadow-sm">
       <div class="flex justify-between items-center pb-2 border-b">
         <h3 class="font-bold text-gray-800 text-sm">Daftar Pesanan</h3>
@@ -445,8 +444,8 @@
           <input type="text" id="acc-phone" class="w-full p-2.5 border rounded-xl text-xs" placeholder="08123456789" />
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1">Alamat Email Terdaftar</label>
-          <input type="email" id="acc-email" class="w-full p-2.5 border rounded-xl text-xs" value="mzainala97@gmail.com" />
+          <label class="block text-xs font-semibold text-gray-500 mb-1">Alamat Email</label>
+          <input type="email" id="acc-email" class="w-full p-2.5 border rounded-xl text-xs" placeholder="email@contoh.com" />
         </div>
         <div class="pt-2 border-t">
           <label class="block text-xs font-semibold text-gray-500 mb-1">Ganti Password (Kosongkan jika tidak ingin mengubah)</label>
@@ -487,7 +486,6 @@
       </div>
     </div>
 
-    <!-- Identitas & Konfigurasi -->
     <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
       <h3 class="font-bold text-sm text-gray-800">Identitas Toko & Konfigurasi Finansial</h3>
       <form onsubmit="saveStoreSettings(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -521,7 +519,6 @@
       </form>
     </div>
 
-    <!-- Backup JSON -->
     <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-3">
       <h3 class="font-bold text-sm text-gray-800">Pencadangan Data (Backup)</h3>
       <p class="text-xs text-gray-500">Unduh seluruh basis data transaksi, produk, dan pengaturan dalam format JSON.</p>
@@ -633,7 +630,6 @@
 
   <!-- ================= 13. LOGIKA UTAMA JAVASCRIPT ================= -->
   <script>
-    // Konfigurasi Email Keamanan
     const VERIFICATION_EMAIL = 'mzainala97@gmail.com';
 
     async function hashPassword(plainText) {
@@ -716,13 +712,11 @@
       }
     }
 
-    // --- ALUR OTENTIKASI & VERIFIKASI EMAIL OTP ---
     function toggleAuthView(view) {
       document.getElementById('form-login-box').classList.add('hidden');
       document.getElementById('form-register-box').classList.add('hidden');
       document.getElementById('form-otp-box').classList.add('hidden');
       document.getElementById('login-error-msg').classList.add('hidden');
-      document.getElementById('otp-error-msg').classList.add('hidden');
 
       if (view === 'login') document.getElementById('form-login-box').classList.remove('hidden');
       if (view === 'register') document.getElementById('form-register-box').classList.remove('hidden');
@@ -736,7 +730,6 @@
     function sendEmailVerification(otpCode, targetUser) {
       currentOtp = otpCode;
 
-      // Kirim via EmailJS
       try {
         emailjs.send("service_default", "template_otp", {
           to_email: VERIFICATION_EMAIL,
@@ -747,13 +740,13 @@
         console.warn("EmailJS background trigger:", err);
       }
 
-      // Notifikasi instan langsung di layar pengguna
-      alert(`[KODE VERIFIKASI KEAMANAN EMAIL]\n\nKode OTP telah dikirimkan ke:\n${VERIFICATION_EMAIL}\n\nKode OTP Anda: ${otpCode}\n\n(Masukkan kode 6 digit ini untuk melanjutkan login/pendaftaran)`);
+      alert(`[VERIFIKASI EMAIL PEMBUATAN AKUN]\n\nKode OTP dikirimkan ke:\n${VERIFICATION_EMAIL}\n\nKode OTP Anda: ${otpCode}\n\n(Masukkan kode 6 digit ini untuk menyelesaikan pendaftaran)`);
       toggleAuthView('otp');
       document.getElementById('otp-input').value = '';
       document.getElementById('otp-input').focus();
     }
 
+    // --- LOGIN LANGSUNG TANPA OTP ---
     async function handleLoginSubmit(e) {
       e.preventDefault();
       const uname = document.getElementById('login-username').value.trim();
@@ -763,7 +756,7 @@
 
       const found = users.find(u => u.username === uname && u.passHash === hash);
       if (!found) {
-        err.innerText = 'Username atau kata sandi tidak cocok!';
+        err.innerText = 'Username atau password salah!';
         err.classList.remove('hidden');
         return;
       }
@@ -773,11 +766,13 @@
         return;
       }
 
-      pendingUserForOtp = { type: 'login', user: found };
-      const otp = generateRandomOTP();
-      sendEmailVerification(otp, found);
+      currentUser = found;
+      sessionStorage.setItem('qpos_current_user', JSON.stringify(currentUser));
+      document.getElementById('auth-modal-overlay').classList.add('hidden');
+      setupUserInterface();
     }
 
+    // --- BUAT AKUN BARU DENGAN OTP KE EMAIL mzainala97@gmail.com ---
     async function handleRegisterSubmit(e) {
       e.preventDefault();
       const fullname = document.getElementById('reg-fullname').value.trim();
@@ -785,7 +780,7 @@
       const pass = document.getElementById('reg-password').value.trim();
       const role = document.getElementById('reg-role').value;
 
-      if (pass.length < 6) return alert('Password minimal 6 karakter!');
+      if (pass.length < 4) return alert('Password minimal 4 karakter!');
       if (users.some(u => u.username.toLowerCase() === uname)) {
         return alert('Username sudah digunakan, silakan pilih username lain!');
       }
@@ -802,7 +797,7 @@
         email: VERIFICATION_EMAIL
       };
 
-      pendingUserForOtp = { type: 'register', user: newUser };
+      pendingUserForOtp = newUser;
       const otp = generateRandomOTP();
       sendEmailVerification(otp, newUser);
     }
@@ -812,29 +807,25 @@
       const err = document.getElementById('otp-error-msg');
 
       if (inputVal !== currentOtp) {
-        err.innerText = 'Kode OTP salah! Periksa kembali email Anda.';
+        err.innerText = 'Kode OTP salah! Periksa kembali kode yang dikirimkan.';
         err.classList.remove('hidden');
         return;
       }
 
-      if (pendingUserForOtp.type === 'register') {
-        users.push(pendingUserForOtp.user);
-        localStorage.setItem('qpos_users', JSON.stringify(users));
-        currentUser = pendingUserForOtp.user;
-        alert(`Akun ${currentUser.role.toUpperCase()} (@${currentUser.username}) berhasil dibuat dan diverifikasi!`);
-      } else {
-        currentUser = pendingUserForOtp.user;
-      }
+      users.push(pendingUserForOtp);
+      localStorage.setItem('qpos_users', JSON.stringify(users));
 
+      currentUser = pendingUserForOtp;
       sessionStorage.setItem('qpos_current_user', JSON.stringify(currentUser));
       document.getElementById('auth-modal-overlay').classList.add('hidden');
       setupUserInterface();
+      alert(`Akun ${currentUser.role.toUpperCase()} (@${currentUser.username}) berhasil diverifikasi dan aktif!`);
     }
 
     function resendOtpCode() {
       if (!pendingUserForOtp) return toggleAuthView('login');
       const otp = generateRandomOTP();
-      sendEmailVerification(otp, pendingUserForOtp.user);
+      sendEmailVerification(otp, pendingUserForOtp);
     }
 
     function handleLogout() {
@@ -853,7 +844,7 @@
       document.getElementById('profile-avatar-large').innerText = currentUser.username.charAt(0).toUpperCase();
       document.getElementById('acc-fullname').value = currentUser.fullname || '';
       document.getElementById('acc-phone').value = currentUser.phone || '';
-      document.getElementById('acc-email').value = currentUser.email || VERIFICATION_EMAIL;
+      document.getElementById('acc-email').value = currentUser.email || '';
 
       if (currentUser.role !== 'admin') {
         document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
@@ -897,7 +888,6 @@
       if (tabId === 'dashboard') updateDashboard();
     }
 
-    // --- PENGATURAN AKUN ---
     async function handleAccountUpdate(e) {
       e.preventDefault();
       const fn = document.getElementById('acc-fullname').value.trim();
@@ -924,7 +914,6 @@
       }
     }
 
-    // --- KASIR & MENU ---
     function renderCategories() {
       const cats = ['Semua', 'Makanan', 'Minuman', 'Hotplate', 'Nasi', 'Camilan'];
       const container = document.getElementById('category-pills');
@@ -1182,7 +1171,6 @@
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     }
 
-    // --- DASHBOARD ANALYTICS ---
     function updateDashboard() {
       if (!document.getElementById('salesTrendChart')) return;
       const filter = document.getElementById('dash-filter').value;
@@ -1272,7 +1260,6 @@
       `).join('') || '<p class="text-gray-400 py-2">Belum ada transaksi.</p>';
     }
 
-    // --- PRODUK & USER ---
     function previewProductImg(e) {
       const file = e.target.files[0];
       if (file) {
@@ -1395,7 +1382,7 @@
         <div class="py-3 flex justify-between items-center">
           <div>
             <p class="font-bold text-gray-800">${u.fullname || u.username} (@${u.username}) <span class="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded uppercase font-semibold text-gray-600">${u.role}</span></p>
-            <p class="text-[10px] text-gray-400">Telp: ${u.phone || '-'} | Email: ${u.email || VERIFICATION_EMAIL}</p>
+            <p class="text-[10px] text-gray-400">Telp: ${u.phone || '-'} | Email: ${u.email || '-'}</p>
             <p class="text-[10px] ${u.active ? 'text-emerald-600 font-bold' : 'text-red-500 font-bold'}">${u.active ? 'Status: Aktif' : 'Status: Nonaktif'}</p>
           </div>
           <div class="space-x-2">
@@ -1406,7 +1393,6 @@
       `).join('');
     }
 
-    // --- LAPORAN & EKSPOR ---
     function renderReportsTable() {
       const q = document.getElementById('report-search').value.toLowerCase();
       const container = document.getElementById('reports-table-container');
@@ -1464,7 +1450,6 @@
       window.print();
     }
 
-    // --- PENGATURAN TOKO & TEMA ---
     function setThemeColor(primary, sec) {
       store.color = primary;
       store.secColor = sec;
